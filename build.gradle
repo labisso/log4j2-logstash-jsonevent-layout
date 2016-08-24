@@ -23,7 +23,7 @@ dependencies {
     testCompile 'commons-collections:commons-collections:3.+'
 
     // JACKSON for JSONification
-    def jacksonVersion = '2.+'
+    def jacksonVersion = '2.8.1'
     compile "com.fasterxml.jackson.core:jackson-core:${jacksonVersion}"
     compile "com.fasterxml.jackson.core:jackson-annotations:${jacksonVersion}"
     compile "com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}"
