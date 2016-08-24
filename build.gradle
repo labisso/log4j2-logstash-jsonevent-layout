@@ -1,64 +1,13 @@
 apply plugin: 'java'
 apply plugin: 'maven'
 apply plugin: 'maven-publish'
-apply plugin: 'maven-publish-auth'
+apply plugin: 'com.jfrog.artifactory'
 
 description = 'Log4J2 Layout for outputting LogStash json_event format'
-
-apply plugin: 'java'
 
 version='4.1.0'
 group = 'net.logstash.log4j2'
 
-buildscript {
-    dependencies {
-        classpath 'org.hibernate.build.gradle:gradle-maven-publish-auth:2.0.1'
-    }
-    repositories {
-        mavenLocal()
-        mavenCentral()
-    }
-}
-
-repositories {
-    mavenLocal()
-    mavenCentral()
-}
-
-publishing {
-    publications {
-        mavenJava(MavenPublication) {
-            from components.java
-            artifact sourcesJar {
-                classifier "sources"
-            }
-            artifact javadocJar {
-                classifier "javadoc"
-            }
-
-        }
-
-    }
-    repositories {
-        maven {
-            if (project.version.endsWith('-SNAPSHOT')) {
-                if (project.hasProperty('snapshotRepoName')) {
-                    name "${snapshotRepoName}"
-                }
-                if (project.hasProperty('snapshotRepoURL')) {
-                    url "${snapshotRepoURL}"
-                }
-            } else {
-                if (project.hasProperty('releaseRepoName')) {
-                    name "$releaseRepoName"
-                }
-                if (project.hasProperty('releaseRepoURL')) {
-                    url "$releaseRepoURL"
-                }
-            }
-        }
-    }
-}
 
 dependencies {
 
@@ -85,22 +34,6 @@ dependencies {
 
     //This JSON Hamcrest Matcher is pretty useful (https://github.com/hertzsprung/hamcrest-json)
     testCompile 'uk.co.datumedge:hamcrest-json:0.+'
-}
-
-
-task sourcesJar(type: Jar, dependsOn: classes) {
-    classifier = 'sources'
-    from sourceSets.main.allSource
-}
-
-task javadocJar(type: Jar, dependsOn: javadoc) {
-    classifier = 'javadoc'
-    from javadoc.destinationDir
-}
-
-artifacts {
-    archives sourcesJar
-    archives javadocJar
 }
 
 
@@ -133,4 +66,49 @@ task integrationTest(type: Test, dependsOn: ['test']) {
 
 task wrapper(type: Wrapper) {
     gradleVersion = '2.4'
+}
+
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath(group: 'org.jfrog.buildinfo', name: 'build-info-extractor-gradle', version: '4.0.0')
+    }
+}
+
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+        }
+    }
+}
+
+artifactory {
+    contextUrl = "${artifactory_contextUrl}"
+    publish {
+        repository {
+            repoKey = 'libs-release-local' // The Artifactory repository key to publish to
+            username = "${artifactory_user}" // The publisher user name
+            password = "${artifactory_password}" // The publisher password
+        }
+        defaults {
+            // Reference to Gradle publications defined in the build script.
+            // This is how we tell the Artifactory Plugin which artifacts should be
+            // published to Artifactory.
+            publications('mavenJava')
+            publishArtifacts = true
+        }
+    }
+    resolve {
+        repository {
+            repoKey = 'repo'
+            username = "${artifactory_user}"
+            password = "${artifactory_password}"
+            maven = true
+        }
+    }
+
 }
